@@ -19,9 +19,12 @@ namespace IndicatorsLibrary.RBasedIndicators
 
         private RecursiveKalmanFilter kalmanFilter;
 
-        public SimpleWaveletKalmanFilter(int xDim, int yDim, float fadingCoeff, int highFreqLevel, int lowFreqLevel, int windowSize, IREngine engine, string scriptConfigName) :base(engine, scriptConfigName)
-        {
+        private void 
 
+        public SimpleWaveletKalmanFilter(int xDim, int yDim, float fadingCoeff, int highFreqLevel, int lowFreqLevel, int windowSize, 
+                                         IREngine engine, string scriptConfigName) :base(engine, scriptConfigName)
+        {
+            kalmanFilter = new RecursiveKalmanFilter(xDim, yDim, fadingCoeff, 1.0f, 1.0f);
         }
     }
 }

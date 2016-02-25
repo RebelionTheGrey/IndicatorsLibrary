@@ -171,12 +171,13 @@
     <Compile Include="R based indicators\BaseTypes.cs" />
     <Compile Include="R based indicators\RLengthIndicator.cs" />
     <Compile Include="R based indicators\Script.cs" />
-    <Compile Include="R based indicators\SimpleWaveletKalmanFilter.cs" />
+    <Compile Include="R based indicators\Wavelet Kalman Filter\SimpleWaveletKalmanFilter.cs" />
     <Compile Include="Utilities\Utilities.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="R based indicators\Wavelet Kalman Filter\WaveletVariance.R" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\MathNet.Numerics.MKL.Win-x64.2.0.0\build\MathNet.Numerics.MKL.Win-x64.targets" Condition="Exists('..\packages\MathNet.Numerics.MKL.Win-x64.2.0.0\build\MathNet.Numerics.MKL.Win-x64.targets')" />

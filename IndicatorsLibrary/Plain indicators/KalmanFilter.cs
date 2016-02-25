@@ -33,9 +33,7 @@ namespace IndicatorsLibrary.PlainIndicators
         private int xDim, yDim;
         public float FadingCoeff { get; set; }
 
-
-
-        public RecursiveKalmanFilter(int xDim, int yDim, float fadingCoeff)
+        public RecursiveKalmanFilter(int xDim, int yDim, float fadingCoeff, float RdiagValue, float QdiagValue)
         {
             this.xDim = xDim;
             this.yDim = yDim;
@@ -45,8 +43,8 @@ namespace IndicatorsLibrary.PlainIndicators
             Pplus = DenseMatrix.CreateRandom(xDim, xDim, new ContinuousUniform(float.MinValue, float.MaxValue));
             Pminus = DenseMatrix.CreateRandom(xDim, xDim, new ContinuousUniform(float.MinValue, float.MaxValue));
 
-            Q = DenseMatrix.Create(xDim, xDim, delegate (int i, int j) { return 10.0f; });
-            R = DenseMatrix.Create(yDim, yDim, delegate (int i, int j) { return 10.0f; });
+            Q = DenseMatrix.Create(xDim, xDim, delegate (int i, int j) { return RdiagValue; });
+            R = DenseMatrix.Create(yDim, yDim, delegate (int i, int j) { return QdiagValue; });
             F = DenseMatrix.Create(xDim, xDim, delegate (int i, int j) { return 1.0f; });
             H = DenseMatrix.Create(yDim, xDim, delegate (int i, int j) { return 1.0f; });
 
@@ -64,7 +62,6 @@ namespace IndicatorsLibrary.PlainIndicators
             var K = Pminus * H.Transpose() * tempVal;
 
             xminus = F * xplus;
-
             xplus = xminus + K * (y - H * xminus);
 
             Pplus = Pminus - K * H * Pminus;
