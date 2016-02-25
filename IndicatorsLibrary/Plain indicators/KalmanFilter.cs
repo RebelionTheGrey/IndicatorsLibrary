@@ -10,55 +10,55 @@ using StockSharp.BusinessEntities;
 
 using StockSharp.Algo.Indicators;
 
+
 using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra.Single;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
+
 using MathNet.Numerics.Distributions;
 
 namespace IndicatorsLibrary.PlainIndicators
 {
-    public class RecursiveKalmanFilter : LengthIndicator<decimal>
+    public class RecursiveKalmanFilter: LengthIndicator<decimal>
     {
-        private Matrix<double> Pplus, Pminus;
-        private Matrix<double> Q, R, F, H;
-        private Vector<double> xplus, xminus;
-        private double fadingCoeff;
+        private Matrix<float> Pplus, Pminus;
+        private Matrix<float> Q, R, F, H;
+        private Vector<float> xplus, xminus;
+
+        public Matrix<float> Qmatrix { get { return Q.Clone(); } set { Qmatrix.CopyTo(Q); } }
+        public Matrix<float> Rmatrix { get { return R.Clone(); } set { Rmatrix.CopyTo(R); } }
+        public Vector<float> AprioriStateEstimation { get { return xminus; } }
+        public Vector<float> AposterioriStateEstimate { get { return xplus; } }
 
         private int xDim, yDim;
+        public float FadingCoeff { get; set; }
 
-        public Matrix<double> Qmatrix { get { return Q.Clone(); } set { Qmatrix.CopyTo(Q); } }
-        public Matrix<double> Rmatrix { get { return R.Clone(); } set { Rmatrix.CopyTo(R); } }
-        public double FadingCoeff { get; protected set; }
 
-        public Vector<double> AprioriStateEstimation { get { return xminus; } }
-        public Vector<double> AposterioriStateEstimate { get { return xplus; } }
 
-        public RecursiveKalmanFilter(int xDim, int yDim, double fadingCoeff)
+        public RecursiveKalmanFilter(int xDim, int yDim, float fadingCoeff)
         {
             this.xDim = xDim;
             this.yDim = yDim;
 
-            FadingCoeff = fadingCoeff;            
+            FadingCoeff = fadingCoeff;
 
-            Pplus = DenseMatrix.CreateRandom(xDim, xDim, new ContinuousUniform(double.MinValue, double.MaxValue));
-            Pminus = DenseMatrix.CreateRandom(xDim, xDim, new ContinuousUniform(double.MinValue, double.MaxValue));
+            Pplus = DenseMatrix.CreateRandom(xDim, xDim, new ContinuousUniform(float.MinValue, float.MaxValue));
+            Pminus = DenseMatrix.CreateRandom(xDim, xDim, new ContinuousUniform(float.MinValue, float.MaxValue));
 
-            Q = DenseMatrix.Create(xDim, xDim, delegate (int i, int j) { return 10.0; });
-            R = DenseMatrix.Create(yDim, yDim, delegate (int i, int j) { return 10.0; });
-            F = DenseMatrix.Create(xDim, xDim, delegate (int i, int j) { return 1.0; });
-            H = DenseMatrix.Create(yDim, xDim, delegate (int i, int j) { return 1.0; });
+            Q = DenseMatrix.Create(xDim, xDim, delegate (int i, int j) { return 10.0f; });
+            R = DenseMatrix.Create(yDim, yDim, delegate (int i, int j) { return 10.0f; });
+            F = DenseMatrix.Create(xDim, xDim, delegate (int i, int j) { return 1.0f; });
+            H = DenseMatrix.Create(yDim, xDim, delegate (int i, int j) { return 1.0f; });
 
             xplus = DenseVector.Create(xDim, delegate (int i) { return 0; });
             xminus = DenseVector.Create(xDim, delegate (int i) { return 0; });
 
-            fadingCoeff = 1.01;
-
             IsFormed = false;
         }
 
-        private void RecalculateFilterParameters(Vector<double> y)
+        private void RecalculateFilterParameters(Vector<float> y)
         {
-            Pminus = Math.Pow(fadingCoeff, 2) * F * Pplus * F.Transpose() + Q;
+            Pminus = (float)Math.Pow(FadingCoeff, 2) * F * Pplus * F.Transpose() + Q;
 
             var tempVal = (H * Pminus * H.Transpose() + R).Inverse();
             var K = Pminus * H.Transpose() * tempVal;
@@ -72,14 +72,13 @@ namespace IndicatorsLibrary.PlainIndicators
 
         protected override IIndicatorValue OnProcess(IIndicatorValue input)
         {
-
             var candle = input.GetValue<Candle>();
             var medianPrice = (candle.ClosePrice + candle.OpenPrice + candle.HighPrice + candle.LowPrice) / 4m;
 
             Buffer.Add(medianPrice);
 
-            Vector<double> val = DenseVector.Create(1, (i) => 0);
-            val[0] = (double)medianPrice;
+            Vector<float> val = DenseVector.Create(1, (i) => 0);
+            val[0] = (float)medianPrice;
 
             RecalculateFilterParameters(val);
 

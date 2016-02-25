@@ -13,6 +13,7 @@ namespace IndicatorsLibrary.RBasedIndicators
         public string ScriptBody { get; protected set; }
         public bool IsValid { get; protected set; }
         public List<string> FunctionNames { get; protected set; }
+        
 
         public Script(string scriptFullName, IEnumerable<string> FunctionNames)
         {
