@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Linq.Expressions;
+using System.Collections;
+
 using System.ComponentModel;
 using StockSharp.Algo;
 using StockSharp.Algo.Indicators;
@@ -39,20 +42,69 @@ namespace IndicatorsLibrary.RBasedIndicators
         protected List<Script> SubScripts { get; set; }
         protected List<Parameter> ScriptParameters { get; set; }        
 
-        protected void LoadScripts(string scriptConfigName)
+
+        private void Initialize()
+        {
+            SubScripts = new List<Script>();
+            ScriptParameters = new List<Parameter>();
+        }
+
+        protected virtual void InjectParameters(IEnumerable<Parameter> parameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                string parameterSetupString;
+                parameterSetupString = parameter.IsSerialized ? string.Format("{0} <- unserialize({1});", parameter.Name, parameter.Value) : string.Format("{0} <- {1}", parameter.Name, parameter.Value);
+
+                Engine.Evaluate(parameterSetupString);
+            }
+        }
+        protected virtual void InjectFunctions(IEnumerable<Script> scripts)
+        {
+            foreach (var script in scripts)
+            {
+                if (script.IsValid)
+                {
+                    Engine.Evaluate(script.ScriptBody);
+
+                    script.InternalFunctions.ForEach(function =>
+                    {
+                        if (function.Item2)
+                            Engine.Evaluate(string.Format("{0} <- cmpfun({0});", function.Item1));
+                    });
+                }
+            }
+        }
+
+        public virtual void LoadScripts(string scriptConfigName = "scriptConfig.xml")
         {
             var config = XElement.Load(scriptConfigName);
 
-            var mainScriptName = config.Descendants("MainScriptName").Select(elem => { return elem.Value; }).ElementAt(0);
-            var subScriptNames = config.Descendants("SubScriptNames").ToList();
-
+            var mainScriptSource = config.Descendants("MainScriptSource").Select(elem => { return elem.Value; }).ElementAt(0);
             var scriptXMLParams = config.Descendants("Parameters").ToList();
+
+            MainScript = new Script(mainScriptSource, null);
+
+
+            var subScriptSources = config.Descendants("SubScriptSource").ToList();
+            subScriptSources.ForEach(elem =>
+            {
+                var scriptSource = elem.Descendants("SourceName").Select(source => { return source.Value; }).ElementAt(0);
+
+                var functionNamesNode = elem.Descendants("FunctionNames").ToList();
+                var functionDataPairs = functionNamesNode.Select(node =>
+                {
+                    return (new Tuple<string, bool>(node.Value, bool.Parse(node.Attribute("NeedCompile").Value)));
+                });
+
+                var newSubScript = new Script(elem.Value, functionDataPairs);
+                SubScripts.Add(newSubScript);
+            });
+
             scriptXMLParams.ForEach(elem =>
             {
                 var currentParameter = new Parameter();
-                var serializedAttr = elem.Attributes().First(attr => attr.Name.LocalName.CompareTo("Serialized") == 0);
-
-                currentParameter.IsSerialized = bool.Parse(serializedAttr.Value);
+                currentParameter.IsSerialized = bool.Parse(elem.Attribute("Serialized").Value);
 
                 currentParameter.Name = elem.Name.LocalName;
                 currentParameter.Value = elem.Value;
@@ -60,33 +112,15 @@ namespace IndicatorsLibrary.RBasedIndicators
                 ScriptParameters.Add(currentParameter);
             });
 
-            MainScript = new Script(mainScriptName, null);
-            SubScripts = new List<Script>();
-            ScriptParameters = new List<Parameter>();
-
-            subScriptNames.ForEach(elem =>
-            {
-                var funcNames = elem.Descendants("FunctionNames").Select(e => { return e.Value; }).ToList();
-                var compileCode = bool.Parse(elem.Descendants("CompileCode").Select(e => { return e.Value; }).ElementAt(0));
-
-                var newSubScript = new Script(elem.Value, funcNames);
-                SubScripts.Add(newSubScript);
-
-                if (newSubScript.IsValid)
-                {
-                    Engine.Evaluate(newSubScript.ScriptBody);
-
-                    if (compileCode)
-                        funcNames.ForEach(e => Engine.Evaluate(string.Format("{0} <- cmpfun({0});", e)));
-                }
-            });
+            InjectFunctions(SubScripts);
+            InjectParameters(ScriptParameters);
         }
 
-        public RLenghtIndicator(IREngine engine, string scriptConfigName) : base()
+        public RLenghtIndicator(IREngine engine) : base()
         {
             Engine = engine;
 
-            LoadScripts(scriptConfigName);
+            Initialize();
         }
     }
 }

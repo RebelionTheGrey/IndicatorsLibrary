@@ -12,20 +12,21 @@ namespace IndicatorsLibrary.RBasedIndicators
     {
         public string ScriptBody { get; protected set; }
         public bool IsValid { get; protected set; }
-        public List<string> FunctionNames { get; protected set; }
-        
+        public List<Tuple<string, bool>> InternalFunctions { get; protected set; }        
 
-        public Script(string scriptFullName, IEnumerable<string> FunctionNames)
+        public Script(string scriptName, IEnumerable<Tuple<string, bool>> internalFunctions)
         {
-            using (TextReader reader = File.OpenText(scriptFullName))
+            using (TextReader reader = File.OpenText(scriptName))
             {
                 string ScriptBody = reader.ReadToEnd();
                 IsValid = true;
 
-                this.FunctionNames = new List<string>();
+                InternalFunctions = new List<Tuple<string, bool>>();
 
-                if (FunctionNames != null)
-                    this.FunctionNames.AddRange(FunctionNames);
+                if (internalFunctions != null)
+                    InternalFunctions.AddRange(internalFunctions);
+                else
+                    InternalFunctions = null;
             }
         }
     }

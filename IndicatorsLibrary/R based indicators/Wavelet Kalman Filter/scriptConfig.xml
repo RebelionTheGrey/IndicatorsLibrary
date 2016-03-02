@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Root>
+  <MainScriptSource>WaveletKalmanFilter.R</MainScriptSource>
+  <SubScriptSources>
+    <SubScriptSource>
+      <SourceName>WaveletVariance.R</SourceName>
+      <FunctionNames>
+        <FunctionName NeedCompile = "true">WaveletMODWTVariance</FunctionName>
+      </FunctionNames>
+    </SubScriptSource>
+  </SubScriptSources>
+  <Parameters>
+    <Parameter Name="HighFreqLevel" IsSerialized="false">3</Parameter>
+    <Parameter Name="LowFreqLevel" IsSerialized="false">2</Parameter>
+    <Parameter Name="WindowSize" IsSerialized="false">100</Parameter>
+    <Parameter Name="WaveletType" IsSerialized="false">d4</Parameter>
+  </Parameters>
+</Root>

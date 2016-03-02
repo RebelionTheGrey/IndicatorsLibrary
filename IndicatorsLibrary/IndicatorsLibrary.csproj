@@ -174,7 +174,9 @@
     <Compile Include="R based indicators\Wavelet Kalman Filter\SimpleWaveletKalmanFilter.cs" />
     <Compile Include="Utilities\Utilities.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="R based indicators\Wavelet Kalman Filter\scriptConfig.xml" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="R based indicators\Wavelet Kalman Filter\WaveletVariance.R" />
